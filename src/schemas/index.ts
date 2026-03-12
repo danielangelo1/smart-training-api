@@ -11,6 +11,16 @@ export const WorkoutSessionSchema = z.object({
   workoutSessionId: z.uuid(),
 });
 
+export const UpdateWorkoutSessionBodySchema = z.object({
+  completedAt: z.iso.datetime(),
+});
+
+export const UpdatedWorkoutSessionSchema = z.object({
+  id: z.uuid(),
+  startedAt: z.iso.datetime(),
+  completedAt: z.iso.datetime(),
+});
+
 export const WorkoutPlanSchema = z.object({
   id: z.uuid(),
   name: z.string().trim().min(1),
