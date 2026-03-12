@@ -10,6 +10,7 @@ interface InputDTO {
     weekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
+    coverImageUrl?: string;
     exercises: Array<{
       name: string;
       order: number;
@@ -20,12 +21,29 @@ interface InputDTO {
   }>;
 }
 
-// export interface OutputDTO {
-//   id: string;
-// }
+export interface OutputDTO {
+  id: string;
+  name: string;
+  workoutDays: Array<{
+    id: string;
+    name: string;
+    weekDay: WeekDay;
+    isRest: boolean;
+    estimatedDurationInSeconds: number;
+    coverImageUrl: string | null;
+    exercises: Array<{
+      id: string;
+      name: string;
+      order: number;
+      sets: number;
+      reps: number;
+      restTimeInSeconds: number;
+    }>;
+  }>;
+}
 
 class CreateWorkoutPlan {
-  async execute(dto: InputDTO) {
+  async execute(dto: InputDTO): Promise<OutputDTO> {
     const existingWorkoutPlan = await prisma.workoutPlan.findFirst({
       where: {
         isActive: true,
@@ -53,6 +71,7 @@ class CreateWorkoutPlan {
               weekDay: workoutDay.weekDay,
               isRest: workoutDay.isRest,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
+              coverImageUrl: workoutDay.coverImageUrl,
               exercises: {
                 create: workoutDay.exercises.map((exercise) => ({
                   name: exercise.name,
@@ -66,6 +85,7 @@ class CreateWorkoutPlan {
           },
         },
       });
+
       const result = await tx.workoutPlan.findUnique({
         where: { id: workoutPlan.id },
         include: {
@@ -76,11 +96,31 @@ class CreateWorkoutPlan {
           },
         },
       });
+
       if (!result) {
         throw new NotFoundError("Workout plan not found");
       }
 
-      return result;
+      return {
+        id: result.id,
+        name: result.name,
+        workoutDays: result.workoutDays.map((day) => ({
+          id: day.id,
+          name: day.name,
+          weekDay: day.weekDay,
+          isRest: day.isRest,
+          estimatedDurationInSeconds: day.estimatedDurationInSeconds,
+          coverImageUrl: day.coverImageUrl,
+          exercises: day.exercises.map((exercise) => ({
+            id: exercise.id,
+            name: exercise.name,
+            order: exercise.order,
+            sets: exercise.sets,
+            reps: exercise.reps,
+            restTimeInSeconds: exercise.restTimeInSeconds,
+          })),
+        })),
+      };
     });
   }
 }
